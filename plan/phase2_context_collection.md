@@ -18,12 +18,12 @@
 
 ## 実装タスク一覧
 
-- [ ] Task 2-1: 文脈データモデル定義（ContextData）
-- [ ] Task 2-2: HealthDataProvider 実装（Health Connect API）
-- [ ] Task 2-3: WeatherProvider 実装（OpenWeatherMap API）
-- [ ] Task 2-4: GmailProvider 実装（Gmail API）
-- [ ] Task 2-5: ContextCollector 統合
-- [ ] Task 2-6: ユニットテスト
++ [x] Task 2-1: 文脈データモデル定義（ContextData）
++ [x] Task 2-2: HealthDataProvider 実装（Health Connect API）
++ [x] Task 2-3: WeatherProvider 実装（OpenWeatherMap API）
++ [x] Task 2-4: GmailProvider 実装（Gmail API）
++ [x] Task 2-5: ContextCollector 統合
++ [x] Task 2-6: ユニットテスト
 
 ---
 
@@ -460,12 +460,12 @@ fun `天候データを正しくパースできる`() = runTest {
 
 ## 完了条件
 
-- [ ] `ContextData`, `HealthData`, `WeatherData`, `PurchaseData` データクラスが定義済み
-- [ ] `HealthDataProvider` が Health Connect から歩数・カロリー・睡眠データを取得可能
-- [ ] `WeatherProvider` が OpenWeatherMap API から天候データを取得可能
-- [ ] `GmailProvider` のスタブ実装が完了
-- [ ] `ContextCollector` が全データソースを並列収集し ContextData に統合
-- [ ] ユニットテストが通過
++ [x] `ContextData`, `HealthData`, `WeatherData`, `PurchaseData` データクラスが定義済み
++ [x] `HealthDataProvider` が Health Connect から歩数・カロリー・睡眠データを取得可能
++ [x] `WeatherProvider` が OpenWeatherMap API から天候データを取得可能
++ [x] `GmailProvider` のスタブ実装が完了
++ [x] `ContextCollector` が全データソースを並列収集し ContextData に統合
++ [x] ユニットテストが通過
 
 ## 参考リンク
 
