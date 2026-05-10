@@ -44,3 +44,5 @@
 
 ### 注文実行
  LLMが選定した code 配列と注文URLを `saizeriya.js` に渡し、注文を完了させる。
+### Notice Regarding Implementation
+The `SaizeriyaClient` in Phase 1 has been implemented by reverse engineering the `pnsk-lab/saizeriya` repository as requested, to correctly mock the API interactions for adding and ordering items from Saizeriya.
