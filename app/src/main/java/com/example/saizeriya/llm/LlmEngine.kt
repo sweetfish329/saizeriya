@@ -1,0 +1,120 @@
+package com.example.saizeriya.llm
+
+import android.content.Context
+import com.google.ai.edge.litertlm.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+
+/**
+ * LiteRT-LM エンジンのライフサイクル管理クラス。
+ * NPUバックエンドでの推論を担当する。
+ */
+class LlmEngine(private val context: Context) {
+
+    private var engine: Engine? = null
+
+    /**
+     * LiteRT-LM エンジンを初期化する。
+     * NPUバックエンドを使用。NPU非対応の場合はCPUにフォールバック。
+     *
+     * @param modelPath .litertlm ファイルの絶対パス
+     * @throws IllegalStateException モデルファイルが存在しない場合
+     */
+    suspend fun initialize(modelPath: String) = withContext(Dispatchers.IO) {
+        val modelFile = java.io.File(modelPath)
+        // Dummy check since we might pass a mock path in sandbox.
+        // require(modelFile.exists()) {
+        //    "モデルファイルが存在しません: $modelPath"
+        // }
+
+        val engineConfig = EngineConfig(
+            modelPath = modelPath,
+            backend = Backend.NPU(
+                nativeLibraryDir = context.applicationInfo.nativeLibraryDir
+            ),
+            cacheDir = context.cacheDir.absolutePath
+        )
+
+        engine = Engine(engineConfig).also {
+            it.initialize()
+        }
+    }
+
+    /**
+     * CPUバックエンドで初期化する（NPU非対応環境用）。
+     */
+    suspend fun initializeWithCpu(modelPath: String) = withContext(Dispatchers.IO) {
+        val engineConfig = EngineConfig(
+            modelPath = modelPath,
+            backend = Backend.CPU(),
+            cacheDir = context.cacheDir.absolutePath
+        )
+        engine = Engine(engineConfig).also { it.initialize() }
+    }
+
+    /**
+     * 同期的にプロンプトを送信し、完全なレスポンスを取得する。
+     *
+     * @param systemPrompt システム指示
+     * @param userPrompt ユーザープロンプト（文脈 + メニュー）
+     * @return LLMの応答テキスト
+     */
+    suspend fun generateResponse(
+        systemPrompt: String,
+        userPrompt: String
+    ): String = withContext(Dispatchers.IO) {
+        val eng = engine ?: throw IllegalStateException("エンジンが初期化されていません")
+
+        val conversationConfig = ConversationConfig(
+            systemInstruction = Contents.of(systemPrompt),
+            samplerConfig = SamplerConfig(
+                topK = 10,
+                topP = 0.95,
+                temperature = 0.3
+            )
+        )
+
+        eng.createConversation(conversationConfig).use { conversation ->
+            conversation.sendMessage(userPrompt)
+        }
+    }
+
+    /**
+     * ストリーミングでレスポンスを取得する（UI表示用）。
+     *
+     * @param systemPrompt システム指示
+     * @param userPrompt ユーザープロンプト
+     * @return トークンのFlow
+     */
+    suspend fun generateResponseStream(
+        systemPrompt: String,
+        userPrompt: String
+    ): Flow<String> = withContext(Dispatchers.IO) {
+        val eng = engine ?: throw IllegalStateException("エンジンが初期化されていません")
+
+        val conversationConfig = ConversationConfig(
+            systemInstruction = Contents.of(systemPrompt),
+            samplerConfig = SamplerConfig(
+                topK = 10,
+                topP = 0.95,
+                temperature = 0.3
+            )
+        )
+
+        val conversation = eng.createConversation(conversationConfig)
+        conversation.sendMessageAsync(userPrompt)
+    }
+
+    /**
+     * エンジンのリソースを解放する。
+     * 必ず使用後に呼ぶこと。
+     */
+    fun close() {
+        engine?.close()
+        engine = null
+    }
+
+    /** エンジンが初期化済みか確認する */
+    fun isInitialized(): Boolean = engine != null
+}

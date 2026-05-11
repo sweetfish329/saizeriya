@@ -1,4 +1,5 @@
 [versions]
+litertLm = "0.11.0"
 agp = "8.7.0"
 kotlin = "2.0.21"
 coreKtx = "1.15.0"
@@ -12,6 +13,7 @@ healthConnect = "1.1.0-alpha10"
 navigationCompose = "2.8.5"
 
 [libraries]
+litert-lm = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litertLm" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
