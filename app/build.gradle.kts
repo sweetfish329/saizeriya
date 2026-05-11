@@ -50,6 +50,7 @@ dependencies {
     // Health Connect
     // Temporarily disable Health Connect dependency as it may be causing a resolution error with external-protobuf
     implementation(libs.androidx.health.connect)
+    // LiteRT-LM
     // テスト
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
