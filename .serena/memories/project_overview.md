@@ -1,13 +1,9 @@
-# Saizeriya Automated Ordering System
+# Project Overview
 
-## Project Purpose
-A local, context-aware automated ordering system for Saizeriya designed specifically for Galaxy S24 devices. It uses on-device Large Language Models (LLMs) to infer the best menu choices based on user context (health data, weather, recent purchases) and automatically places orders.
+Galaxy S24 (Snapdragon 8 Gen 3) 上で完全にローカル動作する、文脈駆動型サイゼリヤ自動注文システム。
+ユーザーの生活文脈（健康データ・天候・購買履歴）をLLMに入力し、最適なメニューを自動選定・注文します。
 
-## Target Hardware
-- Samsung Galaxy S24 (Snapdragon 8 Gen 3)
-- Qualcomm NPU (Hexagon) for on-device ML inference.
-
-## Key Workflow
-1. **Context Collection**: Gather data from Health Connect, Weather API, and Gmail.
-2. **Menu Selection**: Feed context and Saizeriya menu JSON into an on-device LLM (Gemma 4-E2B etc.).
-3. **Order Execution**: LLM outputs menu codes, which are sent to the `saizeriya.js` CLI to place the actual order.
+**重要な設計判断:**
+- 中間DB不使用: メニュー数が約100〜130品と小規模のため、ベクトルDB/SQLiteを使わずJSONをそのままLLMコンテキストに注入。
+- Termux不要: LiteRT-LMのKotlinネイティブAPIを使い、Androidアプリ内で推論が完結。
+- OneComp非採用: LiteRT-LM公式の量子化パイプラインを使用。
