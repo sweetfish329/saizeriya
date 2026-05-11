@@ -39,14 +39,14 @@ graph TD
 
 | レイヤー | 技術 | バージョン |
 |----------|------|-----------|
-| Android App | Kotlin + Jetpack Compose | Kotlin 2.0+, Compose BOM 2024+ |
-| ビルドシステム | Gradle (Kotlin DSL) | 8.x |
-| HTTP通信 | Ktor Client | 3.x |
-| JSON処理 | Kotlinx Serialization | 1.7+ |
-| 非同期処理 | Kotlin Coroutines | 1.9+ |
-| 推論エンジン | LiteRT-LM | 最新 |
+| Android App | Kotlin + Jetpack Compose | Kotlin 2.3.21, Compose 1.11.1 |
+| ビルドシステム | Gradle (Kotlin DSL) | 9.5.0 |
+| HTTP通信 | Ktor Client | 3.4.3 |
+| JSON処理 | Kotlinx Serialization | 1.11.0 |
+| 非同期処理 | Kotlin Coroutines | 1.11.0 |
+| 推論エンジン | LiteRT-LM | v0.11 |
 | LLMモデル | Gemma 4-E4B / Gemma 4-E2B | `.litertlm` 形式 |
-| 健康データ | Health Connect SDK | 最新 |
+| 健康データ | Health Connect SDK | 1.2.0-alpha04 |
 | 天候データ | OpenWeatherMap API | 3.0 |
 | メール | Gmail API (Android) | 最新 |
 

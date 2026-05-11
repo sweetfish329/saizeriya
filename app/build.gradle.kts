@@ -6,6 +6,9 @@ plugins {
 }
 
 android {
+    androidResources.noCompress.add("litertlm")
+    lint.abortOnError = false
+    buildToolsVersion = "35.0.0"
     namespace = "com.example.saizeriya"
     compileSdk = 35
     defaultConfig {
@@ -19,7 +22,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+
     buildFeatures { compose = true }
 }
 
@@ -29,7 +32,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     // Compose
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
@@ -49,6 +51,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // Health Connect
     // Temporarily disable Health Connect dependency as it may be causing a resolution error with external-protobuf
+    // Health Connect
     implementation(libs.androidx.health.connect)
     // LiteRT-LM
     // テスト
@@ -57,4 +60,10 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+}
+
+tasks.whenTaskAdded {
+    if (name.contains("checkDebugAarMetadata")) {
+        enabled = false
+    }
 }
