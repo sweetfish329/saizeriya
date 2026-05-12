@@ -10,6 +10,7 @@ import com.example.saizeriya.context.WeatherProvider
 import com.example.saizeriya.data.repository.MenuRepository
 import com.example.saizeriya.llm.LlmEngine
 import com.example.saizeriya.llm.PromptBuilder
+import com.example.saizeriya.llm.ModelDownloader
 import com.example.saizeriya.llm.ResponseParser
 import com.example.saizeriya.order.OrderExecutor
 import com.example.saizeriya.order.OrderPipeline
@@ -53,6 +54,7 @@ class E2EOrderPipelineTest {
         llmEngine = LlmEngine(context)
         val promptBuilder = PromptBuilder()
         val responseParser = ResponseParser()
+        val modelDownloader = ModelDownloader(context)
 
         pipeline = OrderPipeline(
             contextCollector = contextCollector,
@@ -60,7 +62,8 @@ class E2EOrderPipelineTest {
             llmEngine = llmEngine,
             promptBuilder = promptBuilder,
             responseParser = responseParser,
-            orderExecutor = orderExecutor
+            orderExecutor = orderExecutor,
+            modelDownloader = modelDownloader
         )
     }
 
