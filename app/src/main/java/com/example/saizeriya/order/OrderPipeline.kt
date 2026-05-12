@@ -6,6 +6,7 @@ import com.example.saizeriya.data.model.MenuItem
 import com.example.saizeriya.data.repository.MenuRepository
 import com.example.saizeriya.llm.LlmEngine
 import com.example.saizeriya.llm.LlmMenuResponse
+import com.example.saizeriya.llm.ModelDownloader
 import com.example.saizeriya.llm.PromptBuilder
 import com.example.saizeriya.llm.ResponseParser
 import kotlinx.coroutines.delay
@@ -50,7 +51,8 @@ class OrderPipeline(
     private val llmEngine: LlmEngine,
     private val promptBuilder: PromptBuilder,
     private val responseParser: ResponseParser,
-    private val orderExecutor: OrderExecutor
+    private val orderExecutor: OrderExecutor,
+    private val modelDownloader: ModelDownloader? = null
 ) {
     /** パイプラインの現在の状態 */
     private val _state = MutableStateFlow<PipelineState>(PipelineState.Idle)
@@ -72,6 +74,19 @@ class OrderPipeline(
         longitude: Double
     ): PipelineResult {
         try {
+            // Initialize engine if not ready
+            if (!llmEngine.isInitialized() && modelDownloader != null) {
+                _state.value = PipelineState.DownloadingModel(0)
+                val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
+                val modelPath = modelDownloader.downloadModel(
+                    url = modelUrl,
+                    fileName = "gemma-4-E2B-it.litertlm",
+                    onProgress = { progress -> _state.value = PipelineState.DownloadingModel(progress) }
+                )
+                _state.value = PipelineState.InitializingEngine
+                llmEngine.initialize(modelPath)
+            }
+
             // ステップ1: 文脈データ収集
             _state.value = PipelineState.CollectingContext
             val contextData = contextCollector.collectAll(latitude, longitude)
@@ -161,6 +176,8 @@ class OrderPipeline(
 /** パイプラインの実行状態 */
 sealed class PipelineState {
     data object Idle : PipelineState()
+    data class DownloadingModel(val progress: Int) : PipelineState()
+    data object InitializingEngine : PipelineState()
     data object CollectingContext : PipelineState()
     data object FetchingMenu : PipelineState()
     data object BuildingPrompt : PipelineState()

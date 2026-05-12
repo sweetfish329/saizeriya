@@ -45,6 +45,8 @@ fun OrderScreen(
         Text(
             text = when (pipelineState) {
                 is PipelineState.Idle -> "準備中..."
+                is PipelineState.DownloadingModel -> "⬇️ モデルをダウンロード中... (${pipelineState.progress}%)"
+                is PipelineState.InitializingEngine -> "⚙️ AIエンジンを準備中..."
                 is PipelineState.CollectingContext -> "📊 文脈データを収集中..."
                 is PipelineState.FetchingMenu -> "📋 メニューを取得中..."
                 is PipelineState.BuildingPrompt -> "✍️ プロンプトを生成中..."

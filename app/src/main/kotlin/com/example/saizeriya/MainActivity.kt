@@ -17,6 +17,7 @@ import com.example.saizeriya.context.HealthDataProvider
 import com.example.saizeriya.context.WeatherProvider
 import com.example.saizeriya.data.repository.MenuRepository
 import com.example.saizeriya.llm.LlmEngine
+import com.example.saizeriya.llm.ModelDownloader
 import com.example.saizeriya.llm.PromptBuilder
 import com.example.saizeriya.llm.ResponseParser
 import com.example.saizeriya.order.OrderExecutor
@@ -70,6 +71,7 @@ class MainActivity : ComponentActivity() {
         val llmEngine = LlmEngine(this)
         val promptBuilder = PromptBuilder()
         val responseParser = ResponseParser()
+        val modelDownloader = ModelDownloader(this)
 
         return OrderPipeline(
             contextCollector = contextCollector,
@@ -77,7 +79,8 @@ class MainActivity : ComponentActivity() {
             llmEngine = llmEngine,
             promptBuilder = promptBuilder,
             responseParser = responseParser,
-            orderExecutor = orderExecutor
+            orderExecutor = orderExecutor,
+            modelDownloader = modelDownloader
         )
     }
 }
