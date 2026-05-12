@@ -48,3 +48,11 @@
 The `SaizeriyaClient` in Phase 1 has been implemented by reverse engineering the `pnsk-lab/saizeriya` repository as requested, to correctly mock the API interactions for adding and ordering items from Saizeriya.
 ### Phase 2 Implementation
 Phase 2 has implemented data collection logic. The providers collect context for LLMs: `HealthDataProvider` for Health Connect, `WeatherProvider` for weather, and `GmailProvider` as a stub for email.
+
+## ■ 開発・ビルド手順
+
+各モジュールの詳細なビルド方法やセットアップ手順については、以下のドキュメントを参照してください。
+
+* **[Android アプリのビルドとテスト](docs/android/build.md)**
+* **[LiteRT-LM のセットアップとプロトタイピング](docs/litert/setup.md)**
+* **[saizeriya.js のセットアップ](docs/saizeriya/setup.md)**
