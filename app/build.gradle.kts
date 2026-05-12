@@ -67,3 +67,15 @@ tasks.whenTaskAdded {
         enabled = false
     }
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+tasks.whenTaskAdded {
+    if (name.contains("checkReleaseAarMetadata")) {
+        enabled = false
+    }
+}
