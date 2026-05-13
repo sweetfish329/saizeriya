@@ -5,6 +5,9 @@ import com.example.saizeriya.util.AppLogger
 import com.google.ai.edge.litertlm.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /**
@@ -25,10 +28,9 @@ class LlmEngine(private val context: Context) {
     suspend fun initialize(modelPath: String) = withContext(Dispatchers.IO) {
         AppLogger.i("Initializing LlmEngine with model: $modelPath (NPU)")
         val modelFile = java.io.File(modelPath)
-        // Dummy check since we might pass a mock path in sandbox.
-        // require(modelFile.exists()) {
-        //    "モデルファイルが存在しません: $modelPath"
-        // }
+        require(modelFile.exists()) {
+            "モデルファイルが存在しません: $modelPath"
+        }
 
         val engineConfig = EngineConfig(
             modelPath = modelPath,
@@ -95,7 +97,7 @@ class LlmEngine(private val context: Context) {
             eng.createConversation(conversationConfig).use { conversation ->
                 val response = conversation.sendMessage(userPrompt)
                 AppLogger.i("LLM response generated.")
-                response
+                (response.contents.contents.first() as Content.Text).text
             }
         } catch (e: Exception) {
             AppLogger.e("Error during LLM generation", e)
@@ -113,7 +115,7 @@ class LlmEngine(private val context: Context) {
     suspend fun generateResponseStream(
         systemPrompt: String,
         userPrompt: String
-    ): Flow<String> = withContext(Dispatchers.IO) {
+    ): Flow<String> = flow {
         val eng = engine ?: throw IllegalStateException("エンジンが初期化されていません")
 
         val conversationConfig = ConversationConfig(
@@ -125,8 +127,11 @@ class LlmEngine(private val context: Context) {
             )
         )
 
-        val conversation = eng.createConversation(conversationConfig)
-        conversation.sendMessageAsync(userPrompt)
+        eng.createConversation(conversationConfig).use { conversation ->
+            val responseFlow = conversation.sendMessageAsync(userPrompt)
+                .map { (it.contents.contents.first() as Content.Text).text }
+            emitAll(responseFlow)
+        }
     }
 
     /**

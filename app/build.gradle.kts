@@ -17,13 +17,18 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "OPENWEATHER_API_KEY", "\"your_api_key_here\"")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -54,6 +59,7 @@ dependencies {
     // Health Connect
     implementation(libs.androidx.health.connect)
     // LiteRT-LM
+    implementation(libs.litert.lm)
     // テスト
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

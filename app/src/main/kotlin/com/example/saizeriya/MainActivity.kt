@@ -57,8 +57,7 @@ class MainActivity : ComponentActivity() {
     private fun createOrderPipeline(): OrderPipeline {
         // Providers
         val healthProvider = HealthDataProvider(this)
-        // Using mock/empty keys for demonstration, Phase 2 handles real implementations
-        val weatherProvider = WeatherProvider("mock_api_key")
+        val weatherProvider = WeatherProvider(BuildConfig.OPENWEATHER_API_KEY)
         val gmailProvider = GmailProvider()
         val contextCollector = ContextCollector(healthProvider, weatherProvider, gmailProvider)
 
