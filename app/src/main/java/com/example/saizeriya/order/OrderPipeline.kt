@@ -9,6 +9,7 @@ import com.example.saizeriya.llm.LlmMenuResponse
 import com.example.saizeriya.llm.ModelDownloader
 import com.example.saizeriya.llm.PromptBuilder
 import com.example.saizeriya.llm.ResponseParser
+import com.example.saizeriya.util.AppLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,9 +74,11 @@ class OrderPipeline(
         latitude: Double,
         longitude: Double
     ): PipelineResult {
+        AppLogger.i("Starting OrderPipeline execution. QR: $qrUrl, People: $peopleCount")
         try {
             // Initialize engine if not ready
             if (!llmEngine.isInitialized() && modelDownloader != null) {
+                AppLogger.i("LLM Engine not initialized. Downloading model...")
                 _state.value = PipelineState.DownloadingModel(0)
                 val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
                 val modelPath = modelDownloader.downloadModel(
@@ -83,49 +86,67 @@ class OrderPipeline(
                     fileName = "gemma-4-E2B-it.litertlm",
                     onProgress = { progress -> _state.value = PipelineState.DownloadingModel(progress) }
                 )
+                AppLogger.i("Model downloaded to: $modelPath. Initializing engine...")
                 _state.value = PipelineState.InitializingEngine
                 llmEngine.initialize(modelPath)
             }
 
             // ステップ1: 文脈データ収集
+            AppLogger.i("Step 1: Collecting context data (Lat: $latitude, Lon: $longitude)")
             _state.value = PipelineState.CollectingContext
             val contextData = contextCollector.collectAll(latitude, longitude)
+            AppLogger.d("Context data: $contextData")
 
             // ステップ2: メニューデータ取得
+            AppLogger.i("Step 2: Fetching menu items")
             _state.value = PipelineState.FetchingMenu
             val menuItems = retryWithBackoff {
                 menuRepository.getAllMenuItems()
             }
 
             if (menuItems.isEmpty()) {
+                AppLogger.e("Menu data is empty.")
                 return PipelineResult.Error("メニューデータの取得に失敗しました")
             }
+            AppLogger.d("Fetched ${menuItems.size} menu items")
 
             // ステップ3: プロンプト生成
+            AppLogger.i("Step 3: Building prompt")
             _state.value = PipelineState.BuildingPrompt
             val (systemPrompt, userPrompt) = promptBuilder.build(contextData, menuItems)
+            AppLogger.d("System Prompt: $systemPrompt")
+            AppLogger.d("User Prompt: $userPrompt")
 
             // ステップ4: LLM推論
+            AppLogger.i("Step 4: Running LLM inference")
             _state.value = PipelineState.RunningInference
             val llmOutput = llmEngine.generateResponse(systemPrompt, userPrompt)
+            AppLogger.i("LLM Output received.")
+            AppLogger.d("Raw LLM Output: $llmOutput")
 
             // ステップ5: レスポンスパース
+            AppLogger.i("Step 5: Parsing LLM response")
             _state.value = PipelineState.ParsingResponse
             val menuCodes = responseParser.parseMenuCodes(llmOutput)
+            AppLogger.d("Parsed menu codes: $menuCodes")
 
             // コードのバリデーション
             val validCodes = validateCodes(menuCodes, menuItems)
+            AppLogger.d("Valid menu codes: $validCodes")
             if (validCodes.isEmpty()) {
+                AppLogger.e("No valid menu codes found in LLM output.")
                 _state.value = PipelineState.Failed("LLMが有効なメニューコードを出力しませんでした")
                 return PipelineResult.Error("LLMが有効なメニューコードを出力しませんでした")
             }
 
             // ステップ6: 注文実行
+            AppLogger.i("Step 6: Placing order for codes: $validCodes")
             _state.value = PipelineState.PlacingOrder
             retryWithBackoff {
                 orderExecutor.execute(qrUrl, peopleCount, validCodes)
             }
 
+            AppLogger.i("OrderPipeline execution completed successfully.")
             _state.value = PipelineState.Completed
             return PipelineResult.Success(
                 selectedMenuCodes = validCodes,
@@ -134,6 +155,7 @@ class OrderPipeline(
                 contextData = contextData
             )
         } catch (e: Exception) {
+            AppLogger.e("Error during OrderPipeline execution", e)
             _state.value = PipelineState.Failed(e.message ?: "不明なエラー")
             return PipelineResult.Error(e.message ?: "パイプライン実行中にエラーが発生しました")
         }

@@ -25,6 +25,7 @@ import com.example.saizeriya.order.OrderPipeline
 import com.example.saizeriya.order.PipelineResult
 import com.example.saizeriya.order.SaizeriyaClient
 import com.example.saizeriya.ui.screen.HomeScreen
+import com.example.saizeriya.ui.screen.LogScreen
 import com.example.saizeriya.ui.screen.OrderScreen
 import com.example.saizeriya.ui.screen.ResultScreen
 import com.example.saizeriya.ui.theme.SaizeriyaTheme
@@ -99,8 +100,14 @@ fun AppNavigation(initialQrUrl: String? = null, viewModelFactory: OrderViewModel
                     val encodedUrl = URLEncoder.encode(qrUrl, StandardCharsets.UTF_8.toString())
                     orderViewModel.startOrder(qrUrl, peopleCount, 35.6812, 139.7671)
                     navController.navigate("order/$encodedUrl/$peopleCount")
+                },
+                onViewLogs = {
+                    navController.navigate("logs")
                 }
             )
+        }
+        composable("logs") {
+            LogScreen(onBack = { navController.popBackStack() })
         }
         composable("order/{qrUrl}/{peopleCount}") { backStackEntry ->
             val encodedUrl = backStackEntry.arguments?.getString("qrUrl") ?: ""
