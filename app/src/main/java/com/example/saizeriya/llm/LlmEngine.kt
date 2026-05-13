@@ -1,6 +1,7 @@
 package com.example.saizeriya.llm
 
 import android.content.Context
+import com.example.saizeriya.util.AppLogger
 import com.google.ai.edge.litertlm.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,7 @@ class LlmEngine(private val context: Context) {
      * @throws IllegalStateException モデルファイルが存在しない場合
      */
     suspend fun initialize(modelPath: String) = withContext(Dispatchers.IO) {
+        AppLogger.i("Initializing LlmEngine with model: $modelPath (NPU)")
         val modelFile = java.io.File(modelPath)
         // Dummy check since we might pass a mock path in sandbox.
         // require(modelFile.exists()) {
@@ -36,8 +38,14 @@ class LlmEngine(private val context: Context) {
             cacheDir = context.cacheDir.absolutePath
         )
 
-        engine = Engine(engineConfig).also {
-            it.initialize()
+        try {
+            engine = Engine(engineConfig).also {
+                it.initialize()
+            }
+            AppLogger.i("LlmEngine initialized successfully with NPU")
+        } catch (e: Exception) {
+            AppLogger.e("Failed to initialize LlmEngine with NPU", e)
+            throw e
         }
     }
 
@@ -45,12 +53,19 @@ class LlmEngine(private val context: Context) {
      * CPUバックエンドで初期化する（NPU非対応環境用）。
      */
     suspend fun initializeWithCpu(modelPath: String) = withContext(Dispatchers.IO) {
+        AppLogger.i("Initializing LlmEngine with model: $modelPath (CPU)")
         val engineConfig = EngineConfig(
             modelPath = modelPath,
             backend = Backend.CPU(),
             cacheDir = context.cacheDir.absolutePath
         )
-        engine = Engine(engineConfig).also { it.initialize() }
+        try {
+            engine = Engine(engineConfig).also { it.initialize() }
+            AppLogger.i("LlmEngine initialized successfully with CPU")
+        } catch (e: Exception) {
+            AppLogger.e("Failed to initialize LlmEngine with CPU", e)
+            throw e
+        }
     }
 
     /**
@@ -64,6 +79,7 @@ class LlmEngine(private val context: Context) {
         systemPrompt: String,
         userPrompt: String
     ): String = withContext(Dispatchers.IO) {
+        AppLogger.i("Generating LLM response...")
         val eng = engine ?: throw IllegalStateException("エンジンが初期化されていません")
 
         val conversationConfig = ConversationConfig(
@@ -75,8 +91,15 @@ class LlmEngine(private val context: Context) {
             )
         )
 
-        eng.createConversation(conversationConfig).use { conversation ->
-            conversation.sendMessage(userPrompt)
+        try {
+            eng.createConversation(conversationConfig).use { conversation ->
+                val response = conversation.sendMessage(userPrompt)
+                AppLogger.i("LLM response generated.")
+                response
+            }
+        } catch (e: Exception) {
+            AppLogger.e("Error during LLM generation", e)
+            throw e
         }
     }
 

@@ -11,7 +11,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun HomeScreen(
     initialQrUrl: String? = null,
-    onStartOrder: (qrUrl: String, peopleCount: Int) -> Unit
+    onStartOrder: (qrUrl: String, peopleCount: Int) -> Unit,
+    onViewLogs: () -> Unit
 ) {
     var qrUrl by remember { mutableStateOf(initialQrUrl ?: "") }
     var peopleCount by remember { mutableStateOf(1) }
@@ -62,6 +63,14 @@ fun HomeScreen(
                 enabled = qrUrl.isNotBlank()
             ) {
                 Text("注文を開始する")
+            }
+
+            // ログ確認ボタン
+            OutlinedButton(
+                onClick = onViewLogs,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("システムログを確認")
             }
         }
     }

@@ -8,6 +8,7 @@ import com.example.saizeriya.data.repository.MenuRepository
 import com.example.saizeriya.llm.LlmEngine
 import com.example.saizeriya.llm.PromptBuilder
 import com.example.saizeriya.llm.ResponseParser
+import com.example.saizeriya.util.AppLogger
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,6 +32,7 @@ class OrderPipelineTest {
 
     @Before
     fun setUp() {
+        AppLogger.isTestMode = true
         contextCollector = mock()
         menuRepository = mock()
         llmEngine = mock()
