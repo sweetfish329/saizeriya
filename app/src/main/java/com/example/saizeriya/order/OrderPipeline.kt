@@ -80,7 +80,7 @@ class OrderPipeline(
             if (!llmEngine.isInitialized() && modelDownloader != null) {
                 AppLogger.i("LLM Engine not initialized. Downloading model...")
                 _state.value = PipelineState.DownloadingModel(0)
-                val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
+                val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true"
                 val modelPath = modelDownloader.downloadModel(
                     url = modelUrl,
                     fileName = "gemma-4-E2B-it.litertlm",
