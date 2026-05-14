@@ -13,13 +13,13 @@ class ModelDownloader(private val context: Context) {
     suspend fun downloadModel(
         url: String,
         fileName: String,
-        onProgress: (Int) -> Unit
+        onProgress: (DownloadProgress) -> Unit
     ): String = withContext(Dispatchers.IO) {
         val modelFile = File(context.filesDir, fileName)
 
         // Return early if file already exists
         if (modelFile.exists() && modelFile.length() > 0) {
-            onProgress(100)
+            onProgress(DownloadProgress(100, modelFile.length(), modelFile.length(), 0.0))
             return@withContext modelFile.absolutePath
         }
 
@@ -48,22 +48,32 @@ class ModelDownloader(private val context: Context) {
                 }
             }
 
-            val fileLength = connection.contentLength
+            val fileLength = connection.contentLength.toLong()
             val input = connection.inputStream
             val output = FileOutputStream(modelFile)
 
-            val data = ByteArray(4096)
+            val data = ByteArray(8192)
             var total: Long = 0
             var count: Int
             var lastProgress = -1
 
+            val startTime = System.currentTimeMillis()
+            var lastUpdateTime = startTime
+
             while (input.read(data).also { count = it } != -1) {
                 total += count.toLong()
+                val currentTime = System.currentTimeMillis()
+
                 if (fileLength > 0) {
                     val progress = ((total * 100) / fileLength).toInt()
-                    if (progress != lastProgress) {
-                        onProgress(progress)
+                    // 1%ごと、または少なくとも1秒ごとに更新
+                    if (progress != lastProgress || currentTime - lastUpdateTime >= 1000) {
+                        val elapsedTime = (currentTime - startTime).toDouble() / 1000.0
+                        val speedBps = if (elapsedTime > 0) total.toDouble() / elapsedTime else 0.0
+
+                        onProgress(DownloadProgress(progress, total, fileLength, speedBps))
                         lastProgress = progress
+                        lastUpdateTime = currentTime
                     }
                 }
                 output.write(data, 0, count)
@@ -72,7 +82,7 @@ class ModelDownloader(private val context: Context) {
             output.close()
             input.close()
 
-            if (fileLength > 0 && total != fileLength.toLong()) {
+            if (fileLength > 0 && total != fileLength) {
                 modelFile.delete()
                 throw Exception("ダウンロードが中断されました")
             }

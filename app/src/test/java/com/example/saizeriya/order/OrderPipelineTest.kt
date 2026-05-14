@@ -5,7 +5,9 @@ import com.example.saizeriya.data.model.ContextData
 import com.example.saizeriya.data.model.MenuItem
 import com.example.saizeriya.data.model.OrderSession
 import com.example.saizeriya.data.repository.MenuRepository
+import com.example.saizeriya.llm.DownloadProgress
 import com.example.saizeriya.llm.LlmEngine
+import com.example.saizeriya.llm.ModelDownloader
 import com.example.saizeriya.llm.PromptBuilder
 import com.example.saizeriya.llm.ResponseParser
 import com.example.saizeriya.util.AppLogger
@@ -15,7 +17,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class OrderPipelineTest {
@@ -24,6 +28,7 @@ class OrderPipelineTest {
     private lateinit var menuRepository: MenuRepository
     private lateinit var llmEngine: LlmEngine
     private lateinit var orderExecutor: OrderExecutor
+    private lateinit var modelDownloader: ModelDownloader
 
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var responseParser: ResponseParser
@@ -37,6 +42,7 @@ class OrderPipelineTest {
         menuRepository = mock()
         llmEngine = mock()
         orderExecutor = mock()
+        modelDownloader = mock()
 
         promptBuilder = PromptBuilder()
         responseParser = ResponseParser()
@@ -47,13 +53,15 @@ class OrderPipelineTest {
             llmEngine = llmEngine,
             promptBuilder = promptBuilder,
             responseParser = responseParser,
-            orderExecutor = orderExecutor
+            orderExecutor = orderExecutor,
+            modelDownloader = modelDownloader
         )
     }
 
     @Test
     fun `パイプラインが正常に注文を完了する`() = runTest {
         // モック設定
+        whenever(llmEngine.isInitialized()).thenReturn(true)
         val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
         whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
 
@@ -97,7 +105,30 @@ class OrderPipelineTest {
     }
 
     @Test
+    fun `モデルが未初期化の場合ダウンロードを実行する`() = runTest {
+        whenever(llmEngine.isInitialized()).thenReturn(false)
+        whenever(modelDownloader.downloadModel(any(), any(), any())).thenAnswer {
+            val callback = it.arguments[2] as (DownloadProgress) -> Unit
+            callback(DownloadProgress(50, 500, 1000, 100.0))
+            "model/path"
+        }
+
+        val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
+        whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
+        whenever(menuRepository.getAllMenuItems()).thenReturn(emptyList()) // fail early after download
+
+        pipeline.execute("http://example.com/qr", 2, 35.6, 139.7)
+
+        verify(modelDownloader).downloadModel(any(), any(), any())
+        val state = pipeline.state.value
+        // Note: state will probably be Failed because we returned emptyList() above,
+        // but we can check if it passed through DownloadingModel if we were more careful with the flow.
+        // Actually execute is suspend, so we can't easily see intermediate states without a Flow observer.
+    }
+
+    @Test
     fun `LLM出力異常のフォールバック`() = runTest {
+        whenever(llmEngine.isInitialized()).thenReturn(true)
         // JSON形式ではなく、プレーンテキストで回答してきた場合
         val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
         whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
@@ -124,6 +155,7 @@ class OrderPipelineTest {
 
     @Test
     fun `無効なメニューコードが含まれる場合`() = runTest {
+        whenever(llmEngine.isInitialized()).thenReturn(true)
         val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
         whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
 
@@ -153,6 +185,7 @@ class OrderPipelineTest {
 
     @Test
     fun `すべてのコードが無効な場合エラーになる`() = runTest {
+        whenever(llmEngine.isInitialized()).thenReturn(true)
         val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
         whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
 
@@ -178,6 +211,7 @@ class OrderPipelineTest {
 
     @Test
     fun `ネットワークエラーで注文失敗した場合エラーになる`() = runTest {
+        whenever(llmEngine.isInitialized()).thenReturn(true)
         val mockContextData = ContextData(null, null, null, "2023-10-01T12:00:00Z")
         whenever(contextCollector.collectAll(any(), any())).thenReturn(mockContextData)
 

@@ -4,6 +4,7 @@ import com.example.saizeriya.context.ContextCollector
 import com.example.saizeriya.data.model.ContextData
 import com.example.saizeriya.data.model.MenuItem
 import com.example.saizeriya.data.repository.MenuRepository
+import com.example.saizeriya.llm.DownloadProgress
 import com.example.saizeriya.llm.LlmEngine
 import com.example.saizeriya.llm.LlmMenuResponse
 import com.example.saizeriya.llm.ModelDownloader
@@ -79,7 +80,7 @@ class OrderPipeline(
             // Initialize engine if not ready
             if (!llmEngine.isInitialized() && modelDownloader != null) {
                 AppLogger.i("LLM Engine not initialized. Downloading model...")
-                _state.value = PipelineState.DownloadingModel(0)
+                _state.value = PipelineState.DownloadingModel(DownloadProgress(0, 0, 0, 0.0))
                 val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true"
                 val modelPath = modelDownloader.downloadModel(
                     url = modelUrl,
@@ -198,7 +199,7 @@ class OrderPipeline(
 /** パイプラインの実行状態 */
 sealed class PipelineState {
     data object Idle : PipelineState()
-    data class DownloadingModel(val progress: Int) : PipelineState()
+    data class DownloadingModel(val progress: DownloadProgress) : PipelineState()
     data object InitializingEngine : PipelineState()
     data object CollectingContext : PipelineState()
     data object FetchingMenu : PipelineState()
