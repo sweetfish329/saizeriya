@@ -38,7 +38,8 @@ class ModelDownloaderTest {
         var progressCalled = false
         val path = downloader.downloadModel("http://example.com", "test.bin") {
             progressCalled = true
-            assertEquals(100, it)
+            assertEquals(100, it.progress)
+            assertEquals(dummyFile.length(), it.downloadedBytes)
         }
 
         assertTrue(progressCalled)

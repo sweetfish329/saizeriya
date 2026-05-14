@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.saizeriya.order.PipelineState
 import com.example.saizeriya.ui.viewmodel.OrderUiState
+import java.util.Locale
 
 @Composable
 fun OrderScreen(
@@ -38,14 +39,21 @@ fun OrderScreen(
         verticalArrangement = Arrangement.Center
     ) {
         // 進捗インジケータ
-        CircularProgressIndicator()
+        if (pipelineState is PipelineState.DownloadingModel) {
+            LinearProgressIndicator(
+                progress = { pipelineState.progress.progress.toFloat() / 100f },
+                modifier = Modifier.fillMaxWidth().height(8.dp)
+            )
+        } else {
+            CircularProgressIndicator()
+        }
         Spacer(modifier = Modifier.height(24.dp))
 
         // 現在のステップ表示
         Text(
             text = when (pipelineState) {
                 is PipelineState.Idle -> "準備中..."
-                is PipelineState.DownloadingModel -> "⬇️ モデルをダウンロード中... (${pipelineState.progress}%)"
+                is PipelineState.DownloadingModel -> "⬇️ モデルをダウンロード中..."
                 is PipelineState.InitializingEngine -> "⚙️ AIエンジンを準備中..."
                 is PipelineState.CollectingContext -> "📊 文脈データを収集中..."
                 is PipelineState.FetchingMenu -> "📋 メニューを取得中..."
@@ -58,5 +66,23 @@ fun OrderScreen(
             },
             style = MaterialTheme.typography.titleMedium
         )
+
+        if (pipelineState is PipelineState.DownloadingModel) {
+            Spacer(modifier = Modifier.height(8.dp))
+            val progress = pipelineState.progress
+            val downloadedMb = progress.downloadedBytes.toDouble() / (1024 * 1024)
+            val totalMb = progress.totalBytes.toDouble() / (1024 * 1024)
+            val speedMbps = (progress.speedBps * 8) / (1000 * 1000)
+
+            Text(
+                text = String.format(Locale.US, "%.1f / %.1f MB (%d%%)", downloadedMb, totalMb, progress.progress),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = String.format(Locale.US, "速度: %.2f Mbps", speedMbps),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
     }
 }
